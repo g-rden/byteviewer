@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 	switch (argc) {
 	case 4:
 		byteOffset = strtol(argv[2], 0, 16);
-		lengthFile = strtol(argv[3], 0, 16);
+		lengthFile = strtol(argv[3], 0, 16) + byteOffset;
 		break;
 	case 3:
 		byteOffset = strtol(argv[2], 0, 16);
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 		return 2;
 	}
 
-	if ((lengthFile += byteOffset) <= 0) {
+	if (lengthFile <= 0) {
 		fseek(fp, 0, SEEK_END);
 		if (ftell(fp) <= 0) {
 			printf("%s: empty\n", argv[1]);
