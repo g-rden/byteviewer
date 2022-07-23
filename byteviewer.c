@@ -3,18 +3,18 @@
 
 int main(int argc, char *argv[]) {
 	FILE *fp;
-	size_t byte, byteOffset, lengthFile;
+	long byteOffset, lengthFile, pos;
 
 	byteOffset = 0;
 	lengthFile = 0;
 
 	switch (argc) {
 	case 4:
-		byteOffset = strtoul(argv[2], 0, 16);
-		lengthFile = strtoul(argv[3], 0, 16) + byteOffset;
+		byteOffset = strtol(argv[2], 0, 16);
+		lengthFile = strtol(argv[3], 0, 16);
 		break;
 	case 3:
-		byteOffset = strtoul(argv[2], 0, 16);
+		byteOffset = strtol(argv[2], 0, 16);
 		break;
 	case 2:
 		break;
@@ -23,35 +23,42 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	if (byteOffset < 0)
+		byteOffset = 0;
+
 	if ((fp = fopen(argv[1], "r")) == NULL) {
 		perror(argv[1]);
 		return 2;
 	}
 
-	if ((signed long) lengthFile <= 0) {
+	if ((lengthFile += byteOffset) <= 0) {
 		fseek(fp, 0, SEEK_END);
+		if (ftell(fp) <= 0) {
+			printf("%s: empty\n", argv[1]);
+			return 3;
+		}
 		lengthFile = ftell(fp);
 	}
 	fseek(fp, byteOffset, SEEK_SET);
 
-	for (byte = byteOffset; byte < lengthFile; byte++) {
-		unsigned char chara;
-		chara = (unsigned char) fgetc(fp);
+	for (pos = byteOffset; pos < lengthFile; pos++) {
+		unsigned char byte;
+		byte = (unsigned char) fgetc(fp);
 
-		printf("%02X", chara);
+		printf("%02X", byte);
 
 		/* printable ascii */
-		if (chara >= 32 && chara <= 126)
-			printf("\033[91m%c\033[0m ", chara);
+		if (byte >= 32 && byte <= 126)
+			printf("\033[91m%c\033[0m ", byte);
 		/* non-printable ascii */
 		else
 			fwrite(". ", 2, 1, stdout);
 
 		/* print middle split */
-		if (byte - byteOffset == 7) {
+		if ((pos - byteOffset) == 7) {
 			putchar(32);
 		/* print byte offset */
-		} else if (byte - byteOffset == 15) {
+		} else if ((pos - byteOffset) == 15) {
 			printf(" %lX B\n", byteOffset);
 			byteOffset += 16;
 		}
